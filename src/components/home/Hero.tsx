@@ -31,7 +31,7 @@ export function Hero() {
         {/* Live indicator badge */}
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-full mb-6 animate-pulse">
           <span className="w-2 h-2 bg-red-500 rounded-full" />
-          <span className="text-red-400 text-sm font-medium">LIVE NOW: Miami Swim Week 2025</span>
+          <span className="text-red-400 text-sm font-medium">LIVE: Miami Swim Week 2026</span>
           <ArrowRight size={14} className="text-red-400" />
         </div>
 
