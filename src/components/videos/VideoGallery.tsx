@@ -1,40 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Play, Eye, Search, Tv, ExternalLink } from "lucide-react";
+import Image from "next/image";
+import { Play, Eye, Search, Tv, ExternalLink, Loader2 } from "lucide-react";
 import { GlassCard, GlassButton, GlassInput } from "@/components/ui";
 
 interface Video {
   id: string;
   youtubeId: string;
   title: string;
-  views: number;
-  duration: string;
-  category: string;
-  year: string;
+  thumbnailUrl: string | null;
+  viewCount: number | null;
+  category: string | null;
+  isFeatured: boolean;
 }
 
-// Mock data - replace with YouTube API data
-const allVideos: Video[] = [
-  { id: "1", youtubeId: "dQw4w9WgXcQ", title: "Miami Swim Week 2024 - Opening Night", views: 245000, duration: "18:45", category: "Swimwear", year: "2024" },
-  { id: "2", youtubeId: "dQw4w9WgXcQ", title: "Cannes Beachwear Collection", views: 189000, duration: "12:30", category: "Resortwear", year: "2024" },
-  { id: "3", youtubeId: "dQw4w9WgXcQ", title: "Dubai Fashion Forward Highlights", views: 156000, duration: "22:15", category: "Fashion", year: "2024" },
-  { id: "4", youtubeId: "dQw4w9WgXcQ", title: "Ibiza Summer Collection 2024", views: 134000, duration: "15:00", category: "Swimwear", year: "2024" },
-  { id: "5", youtubeId: "dQw4w9WgXcQ", title: "Monaco Yacht Fashion Show", views: 178000, duration: "25:30", category: "Resortwear", year: "2024" },
-  { id: "6", youtubeId: "dQw4w9WgXcQ", title: "Los Angeles Runway Night", views: 98000, duration: "14:20", category: "Fashion", year: "2024" },
-  { id: "7", youtubeId: "dQw4w9WgXcQ", title: "Miami Swim Week 2023 - Day 1", views: 312000, duration: "45:00", category: "Swimwear", year: "2023" },
-  { id: "8", youtubeId: "dQw4w9WgXcQ", title: "Miami Swim Week 2023 - Day 2", views: 289000, duration: "42:00", category: "Swimwear", year: "2023" },
-  { id: "9", youtubeId: "dQw4w9WgXcQ", title: "Bali Beach Fashion Week", views: 145000, duration: "28:00", category: "Swimwear", year: "2023" },
-  { id: "10", youtubeId: "dQw4w9WgXcQ", title: "Sydney Harbor Collection", views: 167000, duration: "20:00", category: "Fashion", year: "2023" },
-  { id: "11", youtubeId: "dQw4w9WgXcQ", title: "Paris Resort Collection", views: 223000, duration: "32:00", category: "Resortwear", year: "2023" },
-  { id: "12", youtubeId: "dQw4w9WgXcQ", title: "Tokyo Fashion Week Highlights", views: 198000, duration: "26:00", category: "Fashion", year: "2023" },
-];
+const categories = ["All", "swimwear", "fashion", "resortwear"];
 
-const categories = ["All", "Swimwear", "Resortwear", "Fashion"];
-const years = ["All", "2024", "2023", "2022"];
-
-function formatViews(views: number): string {
+function formatViews(views: number | null): string {
+  if (!views) return "0";
   if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M`;
   if (views >= 1000) return `${(views / 1000).toFixed(0)}K`;
   return views.toString();
@@ -51,7 +36,19 @@ function VideoCard({ video }: { video: Video }) {
       <GlassCard variant="interactive" padding="none" className="overflow-hidden">
         {/* Thumbnail */}
         <div className="relative aspect-video overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#9400D3]/40 via-[#FF69B4]/40 to-[#00BFFF]/40" />
+          {video.thumbnailUrl ? (
+            <Image
+              src={video.thumbnailUrl}
+              alt={video.title}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-[#9400D3]/40 via-[#FF69B4]/40 to-[#00BFFF]/40" />
+          )}
+
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
 
           {/* Play button */}
           <div className="absolute inset-0 flex items-center justify-center">
@@ -60,15 +57,19 @@ function VideoCard({ video }: { video: Video }) {
             </div>
           </div>
 
-          {/* Duration */}
-          <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/80 text-white text-xs font-medium rounded">
-            {video.duration}
-          </div>
-
           {/* Category badge */}
-          <div className="absolute top-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-md text-white text-xs font-medium rounded-full border border-white/20">
-            {video.category}
-          </div>
+          {video.category && (
+            <div className="absolute top-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-md text-white text-xs font-medium rounded-full border border-white/20 capitalize">
+              {video.category}
+            </div>
+          )}
+
+          {/* Featured badge */}
+          {video.isFeatured && (
+            <div className="absolute top-3 right-3 px-2 py-1 bg-[#FFED4E]/90 text-black text-xs font-bold rounded-full">
+              FEATURED
+            </div>
+          )}
         </div>
 
         {/* Info */}
@@ -76,12 +77,9 @@ function VideoCard({ video }: { video: Video }) {
           <h3 className="text-base font-semibold text-white group-hover:text-[#00BFFF] transition-colors line-clamp-2 mb-2">
             {video.title}
           </h3>
-          <div className="flex items-center justify-between text-white/50 text-sm">
-            <div className="flex items-center gap-2">
-              <Eye size={14} />
-              <span>{formatViews(video.views)} views</span>
-            </div>
-            <span>{video.year}</span>
+          <div className="flex items-center gap-2 text-white/50 text-sm">
+            <Eye size={14} />
+            <span>{formatViews(video.viewCount)} views</span>
           </div>
         </div>
       </GlassCard>
@@ -90,16 +88,39 @@ function VideoCard({ video }: { video: Video }) {
 }
 
 export function VideoGallery() {
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedYear, setSelectedYear] = useState("All");
 
-  const filteredVideos = allVideos.filter((video) => {
+  useEffect(() => {
+    async function fetchVideos() {
+      try {
+        const res = await fetch("/api/videos");
+        const data = await res.json();
+        setVideos(data.videos || []);
+      } catch (error) {
+        console.error("Failed to fetch videos:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchVideos();
+  }, []);
+
+  const filteredVideos = videos.filter((video) => {
     const matchesSearch = video.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "All" || video.category === selectedCategory;
-    const matchesYear = selectedYear === "All" || video.year === selectedYear;
-    return matchesSearch && matchesCategory && matchesYear;
+    return matchesSearch && matchesCategory;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 size={48} className="animate-spin text-[#FF69B4]" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -122,38 +143,20 @@ export function VideoGallery() {
         </div>
 
         {/* Filter chips */}
-        <div className="flex flex-wrap gap-4">
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  selectedCategory === cat
-                    ? "bg-[#FF69B4] text-white"
-                    : "bg-white/5 text-white/60 hover:bg-white/10"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-          <div className="h-8 w-px bg-white/10 hidden sm:block" />
-          <div className="flex flex-wrap gap-2">
-            {years.map((year) => (
-              <button
-                key={year}
-                onClick={() => setSelectedYear(year)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  selectedYear === year
-                    ? "bg-[#00BFFF] text-white"
-                    : "bg-white/5 text-white/60 hover:bg-white/10"
-                }`}
-              >
-                {year}
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-2">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all capitalize ${
+                selectedCategory === cat
+                  ? "bg-[#FF69B4] text-white"
+                  : "bg-white/5 text-white/60 hover:bg-white/10"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -177,7 +180,6 @@ export function VideoGallery() {
             onClick={() => {
               setSearchQuery("");
               setSelectedCategory("All");
-              setSelectedYear("All");
             }}
           >
             Clear Filters
