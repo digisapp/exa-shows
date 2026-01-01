@@ -2,18 +2,28 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X, Play, Ticket, Video, Users, Calendar } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Menu, X, Play, Ticket, Video, Calendar, Settings, LogOut, User } from "lucide-react";
 import { GlassButton } from "@/components/ui";
+import { useAuth } from "@/context/AuthContext";
 
 const navigation = [
   { name: "Shows", href: "/shows", icon: Calendar },
   { name: "Videos", href: "/videos", icon: Video },
   { name: "Live", href: "/live", icon: Play },
-  { name: "TV Mode", href: "/tv", icon: Users },
 ];
 
 export function Header() {
+  const router = useRouter();
+  const { user, loading, signOut, isAdmin } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  async function handleSignOut() {
+    await signOut();
+    setIsMobileMenuOpen(false);
+    router.push("/");
+    router.refresh();
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
@@ -41,6 +51,15 @@ export function Header() {
                 <span className="font-medium">{item.name}</span>
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 px-4 py-2 text-[#FFED4E] hover:bg-white/10 rounded-full transition-all duration-300"
+              >
+                <Settings size={18} />
+                <span className="font-medium">Admin</span>
+              </Link>
+            )}
           </nav>
 
           {/* Right side buttons */}
@@ -52,12 +71,33 @@ export function Header() {
               </GlassButton>
             </Link>
 
-            {/* Sign In Button */}
-            <Link href="/login" className="hidden md:block">
-              <GlassButton variant="ghost" size="sm">
-                Sign In
-              </GlassButton>
-            </Link>
+            {/* Auth Buttons */}
+            {!loading && (
+              <>
+                {user ? (
+                  <div className="hidden md:flex items-center gap-2">
+                    <Link href="/dashboard">
+                      <GlassButton variant="ghost" size="sm" leftIcon={<User size={16} />}>
+                        {user.email?.split("@")[0]}
+                      </GlassButton>
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                      title="Sign out"
+                    >
+                      <LogOut size={18} />
+                    </button>
+                  </div>
+                ) : (
+                  <Link href="/login" className="hidden md:block">
+                    <GlassButton variant="ghost" size="sm">
+                      Sign In
+                    </GlassButton>
+                  </Link>
+                )}
+              </>
+            )}
 
             {/* Mobile menu button */}
             <button
@@ -86,17 +126,42 @@ export function Header() {
                 <span className="font-medium">{item.name}</span>
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 text-[#FFED4E] hover:bg-white/10 rounded-xl transition-all"
+              >
+                <Settings size={20} />
+                <span className="font-medium">Admin Dashboard</span>
+              </Link>
+            )}
             <div className="pt-4 space-y-2 border-t border-white/10">
               <Link href="/shows" onClick={() => setIsMobileMenuOpen(false)}>
                 <GlassButton variant="gold" size="md" fullWidth leftIcon={<Ticket size={18} />}>
                   Get Tickets
                 </GlassButton>
               </Link>
-              <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                <GlassButton variant="ghost" size="md" fullWidth>
-                  Sign In
-                </GlassButton>
-              </Link>
+              {user ? (
+                <>
+                  <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                    <GlassButton variant="secondary" size="md" fullWidth leftIcon={<User size={18} />}>
+                      My Account
+                    </GlassButton>
+                  </Link>
+                  <button onClick={handleSignOut} className="w-full">
+                    <GlassButton variant="ghost" size="md" fullWidth leftIcon={<LogOut size={18} />}>
+                      Sign Out
+                    </GlassButton>
+                  </button>
+                </>
+              ) : (
+                <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                  <GlassButton variant="ghost" size="md" fullWidth>
+                    Sign In
+                  </GlassButton>
+                </Link>
+              )}
             </div>
           </nav>
         </div>

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
+import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -107,7 +108,9 @@ export default function RootLayout({
         </div>
 
         {/* Main Content */}
-        <div className="relative z-10">{children}</div>
+        <AuthProvider>
+          <div className="relative z-10">{children}</div>
+        </AuthProvider>
       </body>
     </html>
   );
