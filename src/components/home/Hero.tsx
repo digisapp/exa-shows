@@ -39,9 +39,7 @@ export function Hero() {
         <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6">
           <span className="text-white">Experience</span>
           <br />
-          <span className="gradient-text">Fashion Shows</span>
-          <br />
-          <span className="text-white">Worldwide</span>
+          <span className="gradient-text">EXA Shows</span>
         </h1>
 
         {/* Subheading */}
@@ -67,22 +65,6 @@ export function Hero() {
               Past Shows
             </GlassButton>
           </Link>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto">
-          <div className="text-center">
-            <p className="text-3xl sm:text-4xl font-bold gradient-text-gold">200+</p>
-            <p className="text-white/60 text-sm">Fashion Shows</p>
-          </div>
-          <div className="text-center">
-            <p className="text-3xl sm:text-4xl font-bold gradient-text-gold">50K+</p>
-            <p className="text-white/60 text-sm">Tickets Sold</p>
-          </div>
-          <div className="text-center">
-            <p className="text-3xl sm:text-4xl font-bold gradient-text-gold">25+</p>
-            <p className="text-white/60 text-sm">Countries</p>
-          </div>
         </div>
       </div>
 
