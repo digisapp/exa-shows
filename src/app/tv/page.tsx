@@ -14,30 +14,20 @@ import {
   X,
   List,
   Tv,
+  Loader2,
 } from "lucide-react";
-import { GlassButton } from "@/components/ui";
 
 interface Video {
   id: string;
   youtubeId: string;
   title: string;
-  duration: string;
+  duration: string | null;
 }
-
-// Mock playlist
-const playlist: Video[] = [
-  { id: "1", youtubeId: "dQw4w9WgXcQ", title: "Miami Swim Week 2024 - Opening Night", duration: "18:45" },
-  { id: "2", youtubeId: "dQw4w9WgXcQ", title: "Cannes Beachwear Collection", duration: "12:30" },
-  { id: "3", youtubeId: "dQw4w9WgXcQ", title: "Dubai Fashion Forward Highlights", duration: "22:15" },
-  { id: "4", youtubeId: "dQw4w9WgXcQ", title: "Ibiza Summer Collection 2024", duration: "15:00" },
-  { id: "5", youtubeId: "dQw4w9WgXcQ", title: "Monaco Yacht Fashion Show", duration: "25:30" },
-  { id: "6", youtubeId: "dQw4w9WgXcQ", title: "Los Angeles Runway Night", duration: "14:20" },
-  { id: "7", youtubeId: "dQw4w9WgXcQ", title: "Miami Swim Week 2023 - Day 1", duration: "45:00" },
-  { id: "8", youtubeId: "dQw4w9WgXcQ", title: "Miami Swim Week 2023 - Day 2", duration: "42:00" },
-];
 
 export default function TVModePage() {
   const router = useRouter();
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
@@ -45,7 +35,23 @@ export default function TVModePage() {
   const [showControls, setShowControls] = useState(true);
   const [showPlaylist, setShowPlaylist] = useState(false);
 
-  const currentVideo = playlist[currentIndex];
+  // Fetch videos from database
+  useEffect(() => {
+    async function fetchVideos() {
+      try {
+        const res = await fetch("/api/videos");
+        const data = await res.json();
+        setVideos(data.videos || []);
+      } catch (error) {
+        console.error("Failed to fetch videos:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchVideos();
+  }, []);
+
+  const currentVideo = videos[currentIndex];
 
   // Auto-hide controls
   useEffect(() => {
@@ -67,12 +73,12 @@ export default function TVModePage() {
   }, []);
 
   const nextVideo = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % playlist.length);
-  }, []);
+    setCurrentIndex((prev) => (prev + 1) % videos.length);
+  }, [videos.length]);
 
   const prevVideo = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + playlist.length) % playlist.length);
-  }, []);
+    setCurrentIndex((prev) => (prev - 1 + videos.length) % videos.length);
+  }, [videos.length]);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -120,6 +126,36 @@ export default function TVModePage() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [nextVideo, prevVideo, toggleFullscreen, showPlaylist, router]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={48} className="animate-spin text-[#FF69B4] mx-auto mb-4" />
+          <p className="text-white/60">Loading videos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No videos state
+  if (videos.length === 0) {
+    return (
+      <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+        <div className="text-center">
+          <Tv size={48} className="text-white/40 mx-auto mb-4" />
+          <p className="text-white/60 mb-4">No videos available</p>
+          <button
+            onClick={() => router.push("/videos")}
+            className="px-4 py-2 bg-[#FF69B4] text-white rounded-lg hover:bg-[#FF69B4]/80 transition-colors"
+          >
+            Back to Videos
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -188,7 +224,7 @@ export default function TVModePage() {
         {/* Video info */}
         <div className="mb-6">
           <p className="text-white/60 text-sm mb-1">
-            Now Playing ({currentIndex + 1}/{playlist.length})
+            Now Playing ({currentIndex + 1}/{videos.length})
           </p>
           <h2 className="text-white text-2xl font-bold">{currentVideo.title}</h2>
         </div>
@@ -263,7 +299,7 @@ export default function TVModePage() {
           <div className="p-6">
             <h3 className="text-xl font-bold text-white mb-6">Playlist</h3>
             <div className="space-y-2">
-              {playlist.map((video, index) => (
+              {videos.map((video, index) => (
                 <button
                   key={video.id}
                   onClick={() => {
@@ -286,7 +322,7 @@ export default function TVModePage() {
                       >
                         {video.title}
                       </p>
-                      <p className="text-white/40 text-sm">{video.duration}</p>
+                      {video.duration && <p className="text-white/40 text-sm">{video.duration}</p>}
                     </div>
                     {index === currentIndex && (
                       <div className="w-2 h-2 bg-[#FF69B4] rounded-full animate-pulse" />
