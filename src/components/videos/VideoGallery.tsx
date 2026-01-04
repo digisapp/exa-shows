@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Play, Eye, Search, Tv, ExternalLink, Loader2 } from "lucide-react";
+import { Play, Eye, Search, Tv, ExternalLink, Loader2, X } from "lucide-react";
 import { GlassCard, GlassButton, GlassInput } from "@/components/ui";
 
 interface Video {
@@ -16,6 +16,73 @@ interface Video {
   isFeatured: boolean;
 }
 
+function VideoTheater({
+  video,
+  onClose,
+}: {
+  video: Video;
+  onClose: () => void;
+}) {
+  // Handle escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onClick={onClose}
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/95 backdrop-blur-sm" />
+
+      {/* Content */}
+      <div
+        className="relative w-full max-w-6xl mx-4 z-10"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute -top-12 right-0 p-2 text-white/60 hover:text-white transition-colors"
+          aria-label="Close video"
+        >
+          <X size={32} />
+        </button>
+
+        {/* Video container */}
+        <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
+          <iframe
+            src={`https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+            title={video.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="absolute inset-0 w-full h-full"
+          />
+        </div>
+
+        {/* Video title */}
+        <div className="mt-4 text-center">
+          <h2 className="text-xl font-semibold text-white">{video.title}</h2>
+          {video.viewCount && (
+            <p className="text-white/50 text-sm mt-1">
+              {formatViews(video.viewCount)} views
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const categories = ["All", "swimwear", "fashion", "resortwear"];
 
 function formatViews(views: number | null): string {
@@ -25,13 +92,17 @@ function formatViews(views: number | null): string {
   return views.toString();
 }
 
-function VideoCard({ video }: { video: Video }) {
+function VideoCard({
+  video,
+  onPlay,
+}: {
+  video: Video;
+  onPlay: (video: Video) => void;
+}) {
   return (
-    <a
-      href={`https://youtube.com/watch?v=${video.youtubeId}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block group"
+    <button
+      onClick={() => onPlay(video)}
+      className="block group text-left w-full"
     >
       <GlassCard variant="interactive" padding="none" className="overflow-hidden">
         {/* Thumbnail */}
@@ -83,7 +154,7 @@ function VideoCard({ video }: { video: Video }) {
           </div>
         </div>
       </GlassCard>
-    </a>
+    </button>
   );
 }
 
@@ -92,6 +163,15 @@ export function VideoGallery() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+
+  const handlePlayVideo = useCallback((video: Video) => {
+    setSelectedVideo(video);
+  }, []);
+
+  const handleCloseTheater = useCallback(() => {
+    setSelectedVideo(null);
+  }, []);
 
   useEffect(() => {
     async function fetchVideos() {
@@ -123,7 +203,13 @@ export function VideoGallery() {
   }
 
   return (
-    <div>
+    <>
+      {/* Video Theater Modal */}
+      {selectedVideo && (
+        <VideoTheater video={selectedVideo} onClose={handleCloseTheater} />
+      )}
+
+      <div>
       {/* Search and filters */}
       <div className="mb-8 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -169,7 +255,7 @@ export function VideoGallery() {
       {filteredVideos.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredVideos.map((video) => (
-            <VideoCard key={video.id} video={video} />
+            <VideoCard key={video.id} video={video} onPlay={handlePlayVideo} />
           ))}
         </div>
       ) : (
@@ -212,6 +298,7 @@ export function VideoGallery() {
         </GlassCard>
       </div>
     </div>
+    </>
   );
 }
 
