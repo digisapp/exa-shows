@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Play, Eye, Search, Tv, ExternalLink, Loader2, X } from "lucide-react";
+import { Play, Search, Tv, ExternalLink, Loader2, X } from "lucide-react";
 import { GlassCard, GlassButton, GlassInput } from "@/components/ui";
 
 interface Video {
@@ -145,13 +145,9 @@ function VideoCard({
 
         {/* Info */}
         <div className="p-4">
-          <h3 className="text-base font-semibold text-white group-hover:text-[#00BFFF] transition-colors line-clamp-2 mb-2">
+          <h3 className="text-base font-semibold text-white group-hover:text-[#00BFFF] transition-colors line-clamp-2">
             {video.title}
           </h3>
-          <div className="flex items-center gap-2 text-white/50 text-sm">
-            <Eye size={14} />
-            <span>{formatViews(video.viewCount)} views</span>
-          </div>
         </div>
       </GlassCard>
     </button>
